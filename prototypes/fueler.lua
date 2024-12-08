@@ -19,12 +19,11 @@ data:extend({
         category = "crafting",
         energy_required = 1,
         ingredients = {
-            {"iron-plate", 10},
-            {"iron-gear-wheel", 5},
-            {"gun-turret", 1},
+            {type="item", name="iron-plate", amount=10},
+            {type="item", name="iron-gear-wheel",amount= 5},
+            {type="item", name="gun-turret",amount= 1},
         },
-        result = "ei_fueler",
-        result_count = 1,
+        results = {{type="item", name="ei_fueler", amount=1}},
         enabled = false,
     },
     {
