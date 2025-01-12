@@ -49,16 +49,17 @@ function model.transfer_valid(source, transfer)
     end
 
     -- check if contents of source and the source itself can be inserted into the target
+    ---@type LuaInventory
     local source_inv = source.get_inventory(defines.inventory.chest)
     local source_contents = source_inv.get_contents()
 
     local return_value = true
 
-    for item, count in pairs(source_contents) do
+    for _, item in pairs(source_contents) do
 
         local insertable_count = target_inv.get_insertable_count(item)
 
-        if insertable_count < count then
+        if insertable_count < item.count then
             return_value = false
         end
     end
