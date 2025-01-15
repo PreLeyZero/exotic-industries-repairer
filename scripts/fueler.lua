@@ -49,16 +49,17 @@ function model.transfer_valid(source, transfer)
     end
 
     -- check if contents of source and the source itself can be inserted into the target
+    ---@type LuaInventory
     local source_inv = source.get_inventory(defines.inventory.chest)
     local source_contents = source_inv.get_contents()
 
     local return_value = true
 
-    for item, count in pairs(source_contents) do
+    for _, item in pairs(source_contents) do
 
         local insertable_count = target_inv.get_insertable_count(item)
 
-        if insertable_count < count then
+        if insertable_count < item.count then
             return_value = false
         end
     end
@@ -91,19 +92,19 @@ function model.entity_check(entity)
     if not entity.valid then
         return false
     end
-
+ 
     return true
 end
 
 
 function model.check_global()
 
-    if not global.ei then
-        global.ei = {}
+    if not storage.ei then
+        storage.ei = {}
     end
 
-    if not global.ei.fueler then
-        global.ei.fueler = {}
+    if not storage.ei.fueler then
+        storage.ei.fueler = {}
     end
 
 end
@@ -111,12 +112,12 @@ end
 
 function model.check_queue()
 
-    if not global.ei then
-        global.ei = {}
+    if not storage.ei then
+        storage.ei = {}
     end
 
-    if not global.ei.fueler_queue then
-        global.ei.fueler_queue = {}
+    if not storage.ei.fueler_queue then
+        storage.ei.fueler_queue = {}
     end
 
 end
@@ -124,12 +125,12 @@ end
 
 function model.check_cooldown()
 
-    if not global.ei then
-        global.ei = {}
+    if not storage.ei then
+        storage.ei = {}
     end
 
-    if not global.ei.cooldown then
-        global.ei.cooldown = {}
+    if not storage.ei.cooldown then
+        storage.ei.cooldown = {}
     end
 
 end
@@ -137,11 +138,11 @@ end
 
 function model.is_on_cooldown(entity)
 
-    if not global.ei.cooldown[entity.unit_number] then
+    if not storage.ei.cooldown[entity.unit_number] then
         return false
     end
 
-    if global.ei.cooldown[entity.unit_number] > game.tick then
+    if storage.ei.cooldown[entity.unit_number] > game.tick then
         -- the tick value is for when the cooldown will end
         return true
     end
@@ -154,7 +155,7 @@ end
 function model.add_cooldown(entity)
 
     model.check_cooldown()
-    global.ei.cooldown[entity.unit_number] = game.tick + 60
+    storage.ei.cooldown[entity.unit_number] = game.tick + 60
 
 end
 
@@ -344,26 +345,26 @@ function model.get_break_point()
     -- if there id no current break point, then try to return the first element
     -- if that is not possible then return nil
 
-    local break_point = global.ei.fueler_break_point
+    local break_point = storage.ei.fueler_break_point
 
     if break_point then
 
         -- if no element in fueler_queue then return nil and reset the break point
-        if not next(global.ei.fueler_queue) then
-            global.ei.fueler_break_point = nil
+        if not next(storage.ei.fueler_queue) then
+            storage.ei.fueler_break_point = nil
             return nil
         end
 
         -- try to move the break point forward one step
-        if next(global.ei.fueler_queue, break_point) then
-            global.ei.fueler_break_point,_ = next(global.ei.fueler_queue, break_point)
-            return global.ei.fueler_break_point
+        if next(storage.ei.fueler_queue, break_point) then
+            storage.ei.fueler_break_point,_ = next(storage.ei.fueler_queue, break_point)
+            return storage.ei.fueler_break_point
         end
 
         -- cant move the break point forward, so try to return the first element
-        if next(global.ei.fueler_queue) then
-            global.ei.fueler_break_point,_ = next(global.ei.fueler_queue)
-            return global.ei.fueler_break_point
+        if next(storage.ei.fueler_queue) then
+            storage.ei.fueler_break_point,_ = next(storage.ei.fueler_queue)
+            return storage.ei.fueler_break_point
         end
 
         -- cant return the first element, so return nil
@@ -372,9 +373,9 @@ function model.get_break_point()
     end
 
     -- there is no break point, so try to return the first element
-    if next(global.ei.fueler_queue) then
-        global.ei.fueler_break_point,_ = next(global.ei.fueler_queue)
-        return global.ei.fueler_break_point
+    if next(storage.ei.fueler_queue) then
+        storage.ei.fueler_break_point,_ = next(storage.ei.fueler_queue)
+        return storage.ei.fueler_break_point
     end
 
     -- cant return the first element, so return nil
@@ -393,7 +394,7 @@ function model.update_cooldowns()
     local ids_to_remove = {}
 
     -- remove all cooldowns that are over current tick
-    for unit, cooldown in pairs(global.ei.cooldown) do
+    for unit, cooldown in pairs(storage.ei.cooldown) do
 
         if cooldown < game.tick then
             -- store unit for removal
@@ -404,7 +405,7 @@ function model.update_cooldowns()
 
     -- remove all stored units
     for i, unit in ipairs(ids_to_remove) do
-        global.ei.cooldown[unit] = nil
+        storage.ei.cooldown[unit] = nil
     end
 
 end
@@ -415,8 +416,8 @@ function model.update_fueler(break_point)
     model.check_global()
     model.check_cooldown()
 
-    local unit = global.ei.fueler_queue[break_point]
-    local fueler = global.ei.fueler[unit].entity
+    local unit = storage.ei.fueler_queue[break_point]
+    local fueler = storage.ei.fueler[unit].entity
 
     -- get what entity_type this fueler currently fuels
     -- and then try to insert as many items from the fueler inv as possible
@@ -468,7 +469,7 @@ function model.get_target_type(unit)
     -- get the current entity type that this fueler is fueling
     -- if none id given then return the default type (locomotive)
 
-    local target_type = global.ei.fueler[unit].target_type
+    local target_type = storage.ei.fueler[unit].target_type
 
     if not target_type then
         target_type = model.target_types[1]
@@ -488,7 +489,7 @@ function model.set_target_type(unit, target_type)
         target_type = model.target_types[1]
     end
 
-    global.ei.fueler[unit].target_type = target_type
+    storage.ei.fueler[unit].target_type = target_type
 
     -- game.print("Set target type to: " .. target_type)
 
@@ -497,7 +498,7 @@ end
 
 function model.get_equipment(unit)
 
-    local equipment = global.ei.fueler[unit].equipment
+    local equipment = storage.ei.fueler[unit].equipment
 
     if not equipment then
         equipment = false
@@ -514,7 +515,7 @@ function model.set_equipment(unit, equipment)
         equipment = false
     end
 
-    global.ei.fueler[unit].equipment = equipment
+    storage.ei.fueler[unit].equipment = equipment
 
 end
 
@@ -528,15 +529,15 @@ function model.register_fueler(entity)
     model.check_global()
     model.check_queue()
 
-    global.ei.fueler[unit] = {}
-    global.ei.fueler[unit].entity = entity
+    storage.ei.fueler[unit] = {}
+    storage.ei.fueler[unit].entity = entity
 
     -- get lenght of queue
-    local queue_lenght = #global.ei.fueler_queue
-    table.insert(global.ei.fueler_queue, unit)
+    local queue_lenght = #storage.ei.fueler_queue
+    table.insert(storage.ei.fueler_queue, unit)
 
     -- store the position in the queue
-    global.ei.fueler[unit].queue_pos = queue_lenght + 1
+    storage.ei.fueler[unit].queue_pos = queue_lenght + 1
 
 end
 
@@ -553,21 +554,21 @@ function model.unregister_fueler(entity, transfer)
     model.check_queue()
     
     -- remove the unit from the queue
-    local sus_pos = global.ei.fueler[unit].queue_pos
+    local sus_pos = storage.ei.fueler[unit].queue_pos
 
-    if global.ei.fueler_queue[sus_pos] == unit then
-        table.remove(global.ei.fueler_queue, sus_pos)
+    if storage.ei.fueler_queue[sus_pos] == unit then
+        table.remove(storage.ei.fueler_queue, sus_pos)
     else
         -- if the unit is not at that pos, then check for others
-        for i, v in pairs(global.ei.fueler_queue) do
+        for i, v in pairs(storage.ei.fueler_queue) do
             if v == unit then
-                table.remove(global.ei.fueler_queue, i)
+                table.remove(storage.ei.fueler_queue, i)
             end
         end
     end
 
     -- delete the entry from storage 
-    global.ei.fueler[unit] = nil
+    storage.ei.fueler[unit] = nil
 
 end
 

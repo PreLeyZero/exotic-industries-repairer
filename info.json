@@ -3,7 +3,7 @@
     "version": "0.1.2",
     "title": "Exotic Industries: Fueler",
     "author": "PreLeyZero",
-    "factorio_version": "1.1",
+    "factorio_version": "2.0",
     "description": "Adds a auto fueling tower in the Exotic-Industries optic.",
     "dependencies": [
         "base >= 1.0.0",
